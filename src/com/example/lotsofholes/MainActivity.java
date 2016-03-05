@@ -8,6 +8,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -43,7 +44,17 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
 	if (!enabled) 
 	    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+	
+	Criteria criteria = new Criteria();
+	provider = locationManager.getBestProvider(criteria, false);
+	Location location = locationManager.getLastKnownLocation(provider);
 
+	// Initialize the location fields
+	if (location != null) {
+	    System.out.println("Provider " + provider + " has been selected.");
+	    onLocationChanged(location);
+	} else
+	    Toast.makeText(getApplicationContext(), "RIP NO PROVIDER", Toast.LENGTH_LONG).show();
 
     }
 
