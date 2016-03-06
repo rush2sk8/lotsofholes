@@ -8,14 +8,19 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.firebase.client.Firebase;
 
 public class MainActivity extends Activity implements SensorEventListener, LocationListener{
 
@@ -24,13 +29,17 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
     private Sensor linAcc, acc;
     private TextView linAccTv , accTv;
     private int lon , lat;
-    private String provider;
+    private EditText textField ;
+    private Button submitToServer;
+    private Firebase fbref; 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 	setContentView(R.layout.activity_main);
+	Firebase.setAndroidContext(this);
+	fbref = new Firebase("https://lots-of-holes.firebaseio.com/");
 
 	linAccTv = (TextView)findViewById(R.id.linacc);
 	accTv = (TextView)findViewById(R.id.acc);
@@ -44,17 +53,23 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
 	if (!enabled) 
 	    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-	
-	Criteria criteria = new Criteria();
-	provider = locationManager.getBestProvider(criteria, false);
-	Location location = locationManager.getLastKnownLocation(provider);
 
-	// Initialize the location fields
-	if (location != null) {
-	    System.out.println("Provider " + provider + " has been selected.");
-	    onLocationChanged(location);
-	} else
-	    Toast.makeText(getApplicationContext(), "RIP NO PROVIDER", Toast.LENGTH_LONG).show();
+	refreshlocation();
+
+	submitToServer = (Button)findViewById(R.id.write);
+	textField = (EditText)findViewById(R.id.tf);
+
+	submitToServer.setOnClickListener(new OnClickListener() {
+
+	    @Override
+	    public void onClick(View v) {
+		String textToSend = textField.getText().toString();
+		Firebase subRef = fbref.child("locs");
+		subRef.setValue(new FirebaseLocation("guy ","hi "));
+
+	    }
+	});
+
 
     }
 
@@ -103,6 +118,8 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
     public void onLocationChanged(Location location) {
 	lat = (int) (location.getLatitude());
 	lon = (int) (location.getLongitude());
+	Toast.makeText(getApplicationContext(), lat+" "+lon, Toast.LENGTH_LONG).show();
+	System.out.println(lat+" "+lon);
 
     }
 
@@ -138,6 +155,22 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	super.onResume();
 	sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
 	sensorManager.registerListener(this, linAcc, SensorManager.SENSOR_DELAY_NORMAL);
-	locationManager.requestLocationUpdates(provider, 400, 1, this);
+
+	refreshlocation();
     }
+    private void refreshlocation() {
+	if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,1000L,500.0f, this);
+
+	else if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000L,500.0f, this);
+
+	else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,1000L,500.0f, this);
+
+	else
+	    System.out.println("Could not acquire location at all. Turn on yer damn GPS");
+
+    }
+
 }

@@ -26,4 +26,23 @@
         android:layout_marginTop="32dp"
         android:text="TextView" />
 
+    <EditText
+        android:id="@+id/tf"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:ems="10" >
+
+        <requestFocus />
+    </EditText>
+
+    <Button
+        android:id="@+id/write"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="Write to DB" />
+
 </RelativeLayout>
