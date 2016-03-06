@@ -6,5 +6,7 @@
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
 	<classpathentry kind="lib" path="libs/firebase-client-android-2.5.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Antia/Downloads/geofire-1.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Antia/Downloads/geofire-1.1.0-javadoc.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

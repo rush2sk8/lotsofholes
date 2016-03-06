@@ -1,5 +1,7 @@
 package com.example.lotsofholes;
 
+import java.util.Random;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -16,21 +18,28 @@ import android.provider.Settings;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.MutableData;
+import com.firebase.client.Transaction;
+import com.firebase.client.Transaction.Handler;
+import com.firebase.client.Transaction.Result;
+import com.firebase.client.ValueEventListener;
 
 public class MainActivity extends Activity implements SensorEventListener, LocationListener{
 
     private SensorManager sensorManager;
     private LocationManager locationManager;
-    private Sensor linAcc, acc;
-    private TextView linAccTv , accTv;
+    private Sensor linAcc ;
+    private TextView linAccTv ;
     private double lon , lat;
-    private Button submitToServer;
+    private Button submitToServer,sumbitRandom;
     private Firebase fbref; 
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +50,9 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	fbref = new Firebase("https://lots-of-holes.firebaseio.com/");
 
 	linAccTv = (TextView)findViewById(R.id.linacc);
-	accTv = (TextView)findViewById(R.id.acc);
 
 	sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-	acc = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
 	linAcc = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
 	locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -56,36 +64,83 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	refreshlocation();
 
 	submitToServer = (Button)findViewById(R.id.write);
+	sumbitRandom = (Button)findViewById(R.id.randLoc);
+
+	sumbitRandom.setOnClickListener(new OnClickListener() {
+
+	    @Override
+	    public void onClick(View v) {
+		pushDataToServer(-90+ (90 - -90)*Math.random(), -180 + (180- -180)*Math.random());
+
+	    }
+	});
 
 	submitToServer.setOnClickListener(new OnClickListener() {
 
 	    @Override
 	    public void onClick(View v) {
+		pushDataToServer(lat,lon);
 
-		Firebase subRef = fbref.child("locs");
-		subRef.push().setValue(new FirebaseLocationUnit(""+lon, ""+lat));
-		refreshlocation();
 	    }
 	});
 
 
     }
 
+    public void pushDataToServer(double lat, double lon) {
+	final String shit = (lat+" * "+lon).replace(".", " ").replace(".", " ");
 
+	final Firebase subRef = fbref.child(shit);
+
+	subRef.child("frequency").addListenerForSingleValueEvent(new ValueEventListener() {
+
+	    @Override
+	    public void onDataChange(DataSnapshot ds) {
+		System.out.println(ds.getValue()+" ds");
+
+		subRef.child("frequency").setValue(((Double)ds.getValue())+1);
+	    }
+
+	    @Override
+	    public void onCancelled(FirebaseError arg0) {
+		// TODO Auto-generated method stub
+
+	    }
+	});
+
+	subRef.runTransaction(new Handler() {
+
+	    @Override
+	    public void onComplete(FirebaseError arg0, boolean arg1, DataSnapshot arg2) {
+		// TODO Auto-generated method stub
+
+	    }
+
+	    @Override
+	    public Result doTransaction(MutableData md) {
+		System.out.println(md.getValue()+" val");
+		if (md.getValue() != null) {
+		    System.out.println(md.getValue()+ " val");
+		    subRef.child("frequency").setValue((double) md.getValue() + 1);
+		    return Transaction.success(md);
+		}
+		return Transaction.abort();
+
+	    }
+	});
+
+	fbref.child(shit).setValue(new FirebaseLocationUnit(lon, lat,1));
+
+    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-	if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) 
-	    filterAccValues(event);
-
-	else if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION ) 
+	if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION ) 
 	    filterLinAccValues(event);
 
 
     }
-
-
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -93,13 +148,7 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
     }
 
-    private void filterAccValues(SensorEvent event) {
-	float x = event.values[0];
-	float y = event.values[1];
-	float z = event.values[2];
-	accTv.setText("X: "+ x+" Y: "+ y+ " Z: "+ z);
 
-    }
 
     private void filterLinAccValues(SensorEvent event) {
 	float x = event.values[0];
@@ -109,8 +158,6 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	linAccTv.setText("X: "+ x+" Y: "+ y+ " Z: "+ z);
 
     }
-
-
 
     @Override
     public void onLocationChanged(Location location) {
@@ -151,12 +198,11 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
     @Override
     protected void onResume() {
 	super.onResume();
-	sensorManager.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
 	sensorManager.registerListener(this, linAcc, SensorManager.SENSOR_DELAY_NORMAL);
 
 	refreshlocation();
     }
-  
+
     private void refreshlocation() {
 	if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
 	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,50,1.0f, this);
