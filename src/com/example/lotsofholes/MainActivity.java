@@ -1,5 +1,6 @@
 package com.example.lotsofholes;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import android.app.Activity;
@@ -36,6 +37,7 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
     private LocationManager locationManager;
     private Sensor linAcc ;
     private TextView linAccTv ;
+    private ArrayList<String> data;
     private double lon , lat;
     private Button submitToServer,sumbitRandom;
     private Firebase fbref; 
@@ -50,7 +52,7 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	fbref = new Firebase("https://lots-of-holes.firebaseio.com/");
 
 	linAccTv = (TextView)findViewById(R.id.linacc);
-
+	data = new ArrayList<String>();
 	sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
 
 	linAcc = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
@@ -157,6 +159,12 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
 	linAccTv.setText("X: "+ x+" Y: "+ y+ " Z: "+ z);
 
+	//System.out.println(z);
+	if(z>1)
+	    if(!data.contains(lat+" "+lon)) {
+		pushDataToServer(lat, lon);  
+		data.add(lat+" "+lon);
+	    }
     }
 
     @Override
