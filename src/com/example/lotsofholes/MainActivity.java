@@ -28,8 +28,7 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
     private LocationManager locationManager;
     private Sensor linAcc, acc;
     private TextView linAccTv , accTv;
-    private int lon , lat;
-    private EditText textField ;
+    private double lon , lat;
     private Button submitToServer;
     private Firebase fbref; 
 
@@ -57,16 +56,15 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 	refreshlocation();
 
 	submitToServer = (Button)findViewById(R.id.write);
-	textField = (EditText)findViewById(R.id.tf);
 
 	submitToServer.setOnClickListener(new OnClickListener() {
 
 	    @Override
 	    public void onClick(View v) {
-		String textToSend = textField.getText().toString();
-		Firebase subRef = fbref.child("locs");
-		subRef.setValue(new FirebaseLocation("guy ","hi "));
 
+		Firebase subRef = fbref.child("locs");
+		subRef.push().setValue(new FirebaseLocationUnit(""+lon, ""+lat));
+		refreshlocation();
 	    }
 	});
 
@@ -116,8 +114,8 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
     @Override
     public void onLocationChanged(Location location) {
-	lat = (int) (location.getLatitude());
-	lon = (int) (location.getLongitude());
+	lat = (location.getLatitude());
+	lon = (location.getLongitude());
 	Toast.makeText(getApplicationContext(), lat+" "+lon, Toast.LENGTH_LONG).show();
 	System.out.println(lat+" "+lon);
 
@@ -158,15 +156,16 @@ public class MainActivity extends Activity implements SensorEventListener, Locat
 
 	refreshlocation();
     }
+  
     private void refreshlocation() {
 	if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,1000L,500.0f, this);
+	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,50,1.0f, this);
 
 	else if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000L,500.0f, this);
+	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,50,1.0f, this);
 
 	else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
-	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,1000L,500.0f, this);
+	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,50,1.0f, this);
 
 	else
 	    System.out.println("Could not acquire location at all. Turn on yer damn GPS");
