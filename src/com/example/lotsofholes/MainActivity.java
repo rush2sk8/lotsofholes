@@ -31,6 +31,7 @@ import com.firebase.client.Transaction.Handler;
 import com.firebase.client.Transaction.Result;
 import com.firebase.client.ValueEventListener;
 
+@author Rushad Antia
 public class MainActivity extends Activity implements SensorEventListener, LocationListener{
 
     private SensorManager sensorManager;
